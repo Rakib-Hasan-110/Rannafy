@@ -1,0 +1,181 @@
+import React, { useEffect, useState } from "react";
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+import { useQuery } from "@tanstack/react-query";
+import useAxiosSecure from "../../hooks/useAxiosSecure";
+import MealCard from "../../components/MealCard";
+import SearchNotFound from "../../components/SearchNotFound";
+import Skeleton from "../../components/Shared/Loading/Skeleton";
+import Loading from "../../components/Shared/Loading";
+import Reveal from "../../components/Reveal";
+
+const Meals = () => {
+  const axiosSecure = useAxiosSecure();
+  const [search, setSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sort, setSort] = useState("none");
+  const [page, setPage] = useState(1);
+  const limit = 12;
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  const { data = {}, isLoading } = useQuery({
+    queryKey: ["meals", searchQuery, sort, page],
+    queryFn: async () => {
+      const res = await axiosSecure.get(
+        `/meals?search=${searchQuery}&sort=${sort}&page=${page}&limit=${limit}`,
+      );
+      return res.data;
+    },
+  });
+
+  const meals = data.meals || [];
+  const total = data.total || 0;
+  const totalPages = Math.ceil(total / limit);
+
+  // Search button
+  const handleSearch = () => {
+    setSearchQuery(search);
+    setPage(1);
+  };
+
+  if (isLoading) {
+    return <Skeleton />;
+  }
+
+  return (
+    <Reveal>
+      <section className="w-11/12 mx-auto">
+        <title>Rannafy | Get Your Meals</title>
+        {/* Header */}
+        <div className="text-center mt-10 mb-20">
+          <h1 className="text-4xl font-bold text-primary mb-3">
+            Discover Your Next Favorite Recipe
+          </h1>
+          <p className="text-gray-600">
+            Thousands of tried-and-tested recipes, from quick dinners to
+            desserts.
+          </p>
+        </div>
+
+        {/* Filter  */}
+        <div className="grid grid-cols-12 gap-5 items-center mb-16">
+          {/* Count */}
+          <div className="col-span-4 md:col-span-3 lg:col-span-2">
+            <h1 className="lg:font-bold text-primary lg:text-xl">
+              ({total}) Available
+            </h1>
+          </div>
+
+          {/* Search  */}
+          <div className="col-span-8 md:col-span-6 lg:col-span-8 mx-auto flex items-center border pl-4 gap-2 bg-white border-gray-500/30 h-[46px] rounded-full max-w-md w-full">
+            <input
+              type="search"
+              placeholder="Search meals or chef name"
+              value={search}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSearch(value);
+                if (value === "") {
+                  setSearchQuery("");
+                  setPage(1);
+                }
+              }}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              className="w-full h-full outline-none text-sm text-gray-500"
+            />
+            <button
+              onClick={handleSearch}
+              className="bg-primary w-32 h-9 rounded-full text-sm text-white mr-1 cursor-pointer"
+            >
+              Search
+            </button>
+          </div>
+
+          {/* Sort */}
+          <div className=" col-span-12 md:col-span-3 lg:col-span-2">
+            <select
+              className="select select-bordered cursor-pointer w-full"
+              value={sort}
+              onChange={(e) => {
+                setSort(e.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="none">Sort by price</option>
+              <option value="low">Low - High</option>
+              <option value="high">High - Low</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Content */}
+        {isLoading ? (
+          <Loading />
+        ) : meals.length > 0 ? (
+          <>
+            {/* Meals Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+              {meals.map((meal) => (
+                <MealCard key={meal._id} meal={meal} />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            <div className="flex justify-center items-center gap-2 mb-16 flex-wrap">
+              {/* Previous Button */}
+              <button
+                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                disabled={page === 1}
+                className={`p-2 rounded transition ${
+                  page === 1
+                    ? "bg-gray-200 cursor-not-allowed"
+                    : "bg-primary text-white hover:bg-orange-700 cursor-pointer"
+                }`}
+              >
+                <FaChevronLeft />
+              </button>
+
+              {/* Page Numbers */}
+              {[...Array(totalPages).keys()].map((num) => (
+                <button
+                  key={num}
+                  onClick={() => setPage(num + 1)}
+                  className={`px-4 py-2 rounded transition ${
+                    page === num + 1
+                      ? "bg-primary text-white"
+                      : "bg-gray-200 hover:bg-gray-300 cursor-pointer"
+                  }`}
+                >
+                  {num + 1}
+                </button>
+              ))}
+
+              {/* Next Button */}
+              <button
+                onClick={() =>
+                  setPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={page === totalPages}
+                className={`p-2 rounded transition ${
+                  page === totalPages
+                    ? "bg-gray-200 cursor-not-allowed"
+                    : "bg-primary text-white hover:bg-orange-700 cursor-pointer"
+                }`}
+              >
+                <FaChevronRight />
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="p-10">
+            <SearchNotFound />
+          </div>
+        )}
+      </section>
+    </Reveal>
+  );
+};
+
+export default Meals;
