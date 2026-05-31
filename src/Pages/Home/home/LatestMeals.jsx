@@ -1,0 +1,52 @@
+import React from "react";
+import MealCard from "../../../components/MealCard";
+import Reveal from "../../../components/Reveal";
+import useAxiosSecure from "../../../hooks/useAxiosSecure";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router";
+import Skeleton from "../../../components/Shared/Loading/Skeleton";
+
+const LatestMeals = () => {
+  const axiosSecure = useAxiosSecure();
+  const { data: meals = [], isLoading } = useQuery({
+    queryKey: ["latest-meals"],
+    queryFn: async () => {
+      const res = await axiosSecure.get("latest-meals");
+      return res.data;
+    },
+  });
+
+  if (isLoading) {
+    return <Skeleton />;
+  }
+  return (
+    <section className="py-14">
+      {/* Heading & Subheading */}
+      <div className="text-center mb-16">
+        <h1 className="text-4xl md:text-6xl font-extrabold text-gray-800 mb-4">
+          Fresh & New
+          <span className="text-orange-600"> Recipes</span>
+        </h1>
+        <p className="text-lg md:text-xl text-gray-600 max-w-3xl mx-auto">
+          Check out the latest creations from our amazing community of home
+          cooks!
+        </p>
+      </div>
+      <Reveal>
+        {/* Meals Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          {meals.map((meal) => (
+            <MealCard key={meal._id} meal={meal} />
+          ))}
+        </div>
+      </Reveal>
+      <div className="text-center">
+        <Link to="/meals" className="rannafy-btn">
+          View More
+        </Link>
+      </div>
+    </section>
+  );
+};
+
+export default LatestMeals;
