@@ -10,3 +10,19 @@
   --color-primary: #ff6900;
   --color-secondary: teal;
 }
+
+.my-th {
+  @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase
+}
+
+.swal2-confirm {
+  background-color: #ff6900 !important;
+}
+
+body {
+  font-family: "Poppins", sans-serif;
+  font-style: normal;
+}
+
+
+
